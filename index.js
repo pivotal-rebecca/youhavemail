@@ -2,6 +2,7 @@
 * What an adorable little server
 */
 var express = require('express');
+var sendgrid = require('sendgrid');
 var app = express();
 
 var bodyParser = require('body-parser');
@@ -29,17 +30,53 @@ var authMiddleware = function(req, res, next) {
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/youhavemail');
 
-var schema = mongoose.Schema({
+var pivotSchema = mongoose.Schema({
     name: String,
     email: String,
     photo: String
 });
-var Pivot = mongoose.model('Pivot', schema);
+var Pivot = mongoose.model('Pivot', pivotSchema);
+
+var emailSchema = mongoose.Schema({
+    subject: String,
+    from: String,
+    message: String
+});
+var EmailConfig = mongoose.model('EmailConfig', emailSchema);
+EmailConfig.findOneAndUpdate({},
+    {
+        subject: 'You have mail!',
+        from: 'jdeininger@pivotal.io',
+        message: 'You have mail in the mail area on the 11th floor.'
+    }, {upsert: true},
+    function(err, config) {
+        console.log("email config created");
+    });
 
 app.get('/pivots', function(req, res) {
     Pivot.find().then(function(docs) {
         res.status(200).json(docs).end();
     });
+});
+
+app.post('/send', function(req, res) {
+    var emails = req.body;
+    var emailConfig = EmailConfig.findOne()
+        .then(function(emailConfig) {
+            var email = {
+                to: emails,
+                subject: emailConfig.get('subject'),
+                text: emailConfig.get('message')
+            }
+            sendgrid.send(email, function(err, json) {
+                if (err) {
+                    console.log(err);
+                    res.status(500).json({error: 'Sending email failed'}).end();
+                } else {
+                    res.status(200).json({message: 'Sent emails! Hopefully people get their mail soon.'}).end();
+                }
+            });
+        })
 });
 
 // Paste the result of https://pivots.pivotallabs.com/api/users

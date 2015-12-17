@@ -4,22 +4,62 @@
     <title>You Have Mail!</title>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js'></script>
+
+    <style>
+        .container {
+            width:700px;
+            margin: 100px auto 0 auto;
+            font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
+        }
+        h1 {
+            text-align: center;
+            font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
+            font-weight: 600;
+        }
+        ul.pivots {
+            list-style: none;
+            margin:20px 0 0 0;
+            padding:0;
+        }
+        ul.pivots li {
+            padding: 10px;
+            background-color: #efefef;
+            border: 1px solid #ddd;
+            margin:5px 0;
+        }
+        ul.pivots li.selected {
+            background: #666;
+        }
+        input, button {
+            padding:10px;
+            font-size: 20px;
+        }
+        input.filter {
+            width:70%;
+        }
+        button {
+            width: 25%;
+        }
+    </style>
 </head>
 <body>
-    <h1>You Have Mail!</h1>
-    <p class='count'>Total pivots: </p>
-    <input type='text' class='filter' />
-    <button class='sendMessage'>Send</button>
-    <ul class='pivots'>
-    </ul>
+    <div class='container'>
+        <h1>You Have Mail!</h1>
+        <p class='count'>Total pivots: </p>
+        <input type='text' class='filter' />
+        <button class='sendMessage'>Send</button>
+        <ul class='pivots'>
+        </ul>
+    </div>
     <script>
         $(function() {
             var allPivots;
+            var pivotsToMessage = [];
 
             var populatePivots = function() {
                 var list = $('.pivots');
                 allPivots.forEach(function(pivot) {
-                    list.append("<li data-email='"+pivot.email+"' data-name='"+pivot.name+"'>"+pivot.name+" ("+pivot.email+") <input type='checkbox' value='"+pivot.email+"' /></li>");
+                    list.append("<li data-email='"+pivot.email+"' data-name='"+pivot.name+"'>"+pivot.name+" ("+pivot.email+")</li>");
                 });
             }
 
@@ -27,14 +67,20 @@
                 allPivots = pivots;
                 $('.count').append(pivots.length);
                 populatePivots();
+                $('.pivots li').on('click', function() {
+                    if ($(this).hasClass('selected')) {
+                        pivotsToMessage.splice(pivotsToMessage.indexOf($(this).data('email')), 1);
+                    } else {
+                        pivotsToMessage.push($(this).data('email'));
+                    }
+                    $(this).toggleClass('selected');
+                });
             }
 
             var sendMessages = function() {
-                var pivots = [];
-                $('input[type=checkbox]:checked').each(function() {
-                    pivots.push($(this).val());
-                });
-                console.log("sending to "+pivots);
+                console.log(pivotsToMessage);
+                pivotsToMessage = [];
+                $('.pivots li.selected').removeClass('selected');
             }
 
             var filterPivots = function() {

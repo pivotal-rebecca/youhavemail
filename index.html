@@ -1,10 +1,61 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title></title>
+    <title>You Have Mail!</title>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js'></script>
 </head>
 <body>
     <h1>You Have Mail!</h1>
-    <p>Sup</p>
+    <p class='count'>Total pivots: </p>
+    <input type='text' class='filter' />
+    <button class='sendMessage'>Send</button>
+    <ul class='pivots'>
+    </ul>
+    <script>
+        $(function() {
+            var allPivots;
+
+            var populatePivots = function() {
+                var list = $('.pivots');
+                allPivots.forEach(function(pivot) {
+                    list.append("<li data-email='"+pivot.email+"' data-name='"+pivot.name+"'>"+pivot.name+" ("+pivot.email+") <input type='checkbox' value='"+pivot.email+"' /></li>");
+                });
+            }
+
+            var pivotsSuccess = function(pivots) {
+                allPivots = pivots;
+                $('.count').append(pivots.length);
+                populatePivots();
+            }
+
+            var sendMessages = function() {
+                var pivots = [];
+                $('input[type=checkbox]:checked').each(function() {
+                    pivots.push($(this).val());
+                });
+                console.log("sending to "+pivots);
+            }
+
+            var filterPivots = function() {
+                var filter = $('.filter').val().toLowerCase();
+                var list = $('.pivots');
+                $('.pivots li').filter(function(index) {
+                    var name = $(this).data('name').toLowerCase();
+                    var email = $(this).data('email').toLowerCase();
+                    var match = name.indexOf(filter) !== -1 || email.indexOf(filter) !== -1;
+                    if (match) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+
+            $.get('/pivots', pivotsSuccess);
+            $('.sendMessage').on('click', sendMessages);
+            $('.filter').on('input', filterPivots);
+        });
+    </script>
 </body>
 </html>

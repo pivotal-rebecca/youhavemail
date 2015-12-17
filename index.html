@@ -6,10 +6,15 @@
     <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js'></script>
 
     <style>
+        body {
+            background: url('http://colourlovers.com.s3.amazonaws.com/images/patterns/4755/4755276.png');
+        }
         .container {
             width:700px;
             margin: 100px auto 0 auto;
             font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
+            padding: 30px;
+            background-color: #fff;
         }
         h1 {
             text-align: center;
@@ -28,7 +33,9 @@
             margin:5px 0;
         }
         ul.pivots li.selected {
-            background: #666;
+            background: #03786e;
+            color: #fff;
+            font-weight: 500;
         }
         input, button {
             padding:10px;
@@ -39,6 +46,14 @@
         }
         button {
             width: 25%;
+            border-radius: 3px;
+            border: 2px solid #666;
+            border-collapse: collapse;
+            background: #03786e;
+            color: #fff;
+        }
+        button:active {
+            background: #444;
         }
     </style>
 </head>

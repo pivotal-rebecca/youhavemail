@@ -93,9 +93,21 @@
             }
 
             var sendMessages = function() {
-                console.log(pivotsToMessage);
-                pivotsToMessage = [];
-                $('.pivots li.selected').removeClass('selected');
+                $.ajax({
+                    type: "POST",
+                    url: '/send',
+                    data: JSON.stringify(pivotsToMessage),
+                    success: function(data, status, xhr) {
+                        $('h1').html("SENT!");
+                        pivotsToMessage = [];
+                        $('.pivots li.selected').removeClass('selected');
+                    },
+                    error: function(xhr, status, error) {
+                        $('h1').html('Error: ' + error);
+                    },
+                    contentType: 'application/json',
+                    dataType: 'json'
+                });
             }
 
             var filterPivots = function() {

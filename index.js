@@ -1,8 +1,10 @@
 /*
 * What an adorable little server
 */
+
+var envServices = JSON.parse(process.env.VCAP_SERVICES);
 var express = require('express');
-var sendgrid = require('sendgrid');
+var sendgrid = require('sendgrid')(envServices.sendgrid[0].credentials.username, envServices.sendgrid[0].credentials.password);
 var app = express();
 
 var bodyParser = require('body-parser');
@@ -32,8 +34,7 @@ var mongoose = require('mongoose');
 if (process.env.DEBUG === 'true') {
     mongoose.connect('mongodb://localhost/youhavemail');
 } else {
-    var services = JSON.parse(process.env.VCAP_SERVICES);
-    var mongo = services.mongolab[0];
+    var mongo = envServices.mongolab[0];
     mongoose.connect(mongo.credentials.uri);
 }
 
@@ -68,10 +69,13 @@ app.get('/pivots', function(req, res) {
 
 app.post('/send', function(req, res) {
     var emails = req.body;
+    console.log(emails);
     var emailConfig = EmailConfig.findOne()
         .then(function(emailConfig) {
+          console.log("found email config" + emailConfig);
             var email = {
                 to: emails,
+                from: 'jdeininger@pivotal.io',
                 subject: emailConfig.get('subject'),
                 text: emailConfig.get('message')
             }
@@ -80,6 +84,7 @@ app.post('/send', function(req, res) {
                     console.log(err);
                     res.status(500).json({error: 'Sending email failed'}).end();
                 } else {
+                    console.log(json);
                     res.status(200).json({message: 'Sent emails! Hopefully people get their mail soon.'}).end();
                 }
             });

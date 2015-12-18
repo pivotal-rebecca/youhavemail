@@ -1,0 +1,7 @@
+---
+applications:
+- name: youhavemail 
+  memory: 512M
+  instances: 1
+  command: node index.js
+  timeout: 180

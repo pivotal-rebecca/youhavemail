@@ -20,15 +20,22 @@ var authMiddleware = function(req, res, next) {
         return unauthorized(res);
     }
 
-    if (user.name === 'admin' && user.pass === 'password') {
+    if (user.name === 'jessee' && user.pass === 'bleepbloop') {
         return next();
     }
     return unauthorized(res);
 }
-// app.use(authMiddleware);
+app.use(authMiddleware);
 
 var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/youhavemail');
+
+if (process.env.DEBUG === 'true') {
+    mongoose.connect('mongodb://localhost/youhavemail');
+} else {
+    var services = JSON.parse(process.env.VCAP_SERVICES);
+    var mongo = services.mongolab[0];
+    mongoose.connect(mongo.credentials.uri);
+}
 
 var pivotSchema = mongoose.Schema({
     name: String,
@@ -96,12 +103,13 @@ app.post('/addPivots', function(req, res) {
             ).then(function(err, doc) {
                 if (err) {
                     console.log(err);
+                    res.status(500).json({error: 'Creating pivots'}).end();
+                } else {
+                    res.status(200).json({message: 'Created pivots'}).end();
                 }
             });
         }
     });
-
-    res.status(200).json({message: 'Created pivots'}).end();
 });
 
 app.get('/', function(req, res) {
@@ -113,6 +121,6 @@ app.get('/', function(req, res) {
     });
 });
 
-var server = app.listen(3000, function() {
-    console.log("Started on 3000");
+var server = app.listen(process.env.PORT, function() {
+    console.log("Started on " + process.env.PORT);
 });

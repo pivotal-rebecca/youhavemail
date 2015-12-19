@@ -4,7 +4,7 @@
     <title>You Have Mail!</title>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>
     <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js'></script>
-
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
     <style>
         body {
             background: url('http://colourlovers.com.s3.amazonaws.com/images/patterns/4755/4755276.png');
@@ -15,11 +15,15 @@
             font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
             padding: 30px;
             background-color: #fff;
+            position: relative;
         }
         h1 {
             text-align: center;
             font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
             font-weight: 600;
+        }
+        p.selected-pivots {
+            font-weight: 500;
         }
         ul.pivots {
             list-style: none;
@@ -37,14 +41,14 @@
             color: #fff;
             font-weight: 500;
         }
-        input, button {
+        input, button, textarea {
             padding:10px;
             font-size: 20px;
         }
         input.filter {
             width:70%;
         }
-        button {
+        button.send-message {
             width: 25%;
             border-radius: 3px;
             border: 2px solid #666;
@@ -55,14 +59,79 @@
         button:active {
             background: #444;
         }
+        .toggle-box {
+            display: none;
+            width: 50%;
+            margin: 0 auto;
+        }
+        .email-config input,
+        .email-config textarea {
+            width: 100%;
+            display: block;
+        }
+        .email-config textarea {
+            height: 100px;
+            margin: 0 0 10px 0;
+        }
+        .email-config label {
+            display: block;
+            font-size: 12px;
+            margin: 10px 0 4px 0;
+        }
+        .icons {
+            list-style: none;
+            position: absolute;
+            top: 10px;
+            right: 30px;
+        }
+        .icons li {
+            display: inline-block;
+            cursor: pointer;
+            margin: 0 0 0 8px;
+        }
+        .icons li span {
+            color: #444;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
     <div class='container'>
+
+        <div class='toggle-box email-config'>
+            <label for='from-address'>'From' Email Address</label>
+            <input type='text' name='from-address' value='' />
+            <label for='from-name'>'From' Name</label>
+            <input type='text' name='from-name' value='' />
+            <label for='subject'>Subject</label>
+            <input type='text' name='subject' value='' />
+            <label for='message'>Message</label>
+            <textarea name='message'></textarea>
+            <button class='email-config-submit'>Update</button>
+        </div>
+
+        <div class='toggle-box instructions'>
+            <p><strong>Filter</strong> Toronto's pivots and choose who to email. Typing in the box live-filters pivots.</p>
+            <p>If you press enter while in the filtering box, the visible pivots will all be selected.</p>
+            <p>Press <strong>Send</strong> to send an email to selected pivots.</p>
+            <p>You can edit the email settings by clicking the little cogs and clicking update. Let me know if you need more flexibility!</p>
+        </div>
+
+        <div class='toggle-box upload-pivots'>
+
+        </div>
+
         <h1>You Have Mail!</h1>
+        <ul class='icons'>
+            <li><span class='fa fa-cogs edit-config'></span></li>
+            <li><span class='fa fa-upload'></span></li>
+            <li><span class='fa fa-question-circle'></span></li>
+        </ul>
+
         <p class='count'>Total pivots: </p>
+        <p class='selected-pivots'></p>
         <input type='text' class='filter' />
-        <button class='sendMessage'>Send</button>
+        <button class='send-message'>Send</button>
         <ul class='pivots'>
         </ul>
     </div>
@@ -89,7 +158,15 @@
                         pivotsToMessage.push($(this).data('email'));
                     }
                     $(this).toggleClass('selected');
+                    $(document).trigger('selectedPivotsUpdated');
                 });
+            }
+
+            var loadEmailConfigSuccess = function(config) {
+                $('input[name=from-address]').val(config.from);
+                $('input[name=subject]').val(config.subject);
+                $('input[name=from-name]').val(config.fromName);
+                $('textarea[name=message]').val(config.message);
             }
 
             var sendMessages = function() {
@@ -101,6 +178,7 @@
                         $('h1').html("SENT!");
                         pivotsToMessage = [];
                         $('.pivots li.selected').removeClass('selected');
+                        $(document).trigger('selectedPivotsUpdated');
                     },
                     error: function(xhr, status, error) {
                         $('h1').html('Error: ' + error);
@@ -112,7 +190,6 @@
 
             var filterPivots = function() {
                 var filter = $('.filter').val().toLowerCase();
-                var list = $('.pivots');
                 $('.pivots li').filter(function(index) {
                     var name = $(this).data('name').toLowerCase();
                     var email = $(this).data('email').toLowerCase();
@@ -125,9 +202,75 @@
                 });
             }
 
+            var selectWithEnter = function(ev) {
+                if (ev.keyCode === 13) {
+                    $('.pivots li:visible').addClass('selected');
+                    $(document).trigger('selectedPivotsUpdated');
+                }
+            }
+
+            var saveEmailConfig = function() {
+                var email = $('input[name=from-address]').val();
+                var name = $('input[name=from-name]').val();
+                var subject = $('input[name=subject]').val();
+                var message = $('textarea[name=message]').val();
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/emailConfig',
+                    data: JSON.stringify({
+                        from: email,
+                        fromName: name,
+                        subject: subject,
+                        message: message
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(result, stats, xhr) {
+                        $('.email-config').hide();
+                    },
+                    error: function(xhr, status, error) {
+
+                    }
+                })
+            }
+
+            var toggleBox = function(boxClass) {
+                var open = $(boxClass).is(':visible');
+                $('.toggle-box').hide(50);
+                if (!open) {
+                    $(boxClass).show(100);
+                } else {
+                    $(boxClass).hide(100);
+                }
+            }
+
+            var updateSelectedPivots = function() {
+                $('.selected-pivots').html('Selected pivots: ' + $('.pivots li.selected').length);
+            }
+
             $.get('/pivots', pivotsSuccess);
-            $('.sendMessage').on('click', sendMessages);
+            $.get('/emailConfig', loadEmailConfigSuccess);
+
+            $('.send-message').on('click', sendMessages);
             $('.filter').on('input', filterPivots);
+            $('.filter').keypress(selectWithEnter);
+
+
+            $('.email-config button.email-config-submit').on('click', saveEmailConfig);
+
+            $('.fa-upload').on('click', function() {
+                toggleBox('.upload-pivots');
+            });
+            $('.fa-question-circle').on('click', function() {
+                toggleBox('.instructions');
+            });
+            $('.edit-config').on('click', function() {
+                toggleBox('.email-config');
+            });
+
+            updateSelectedPivots();
+            $(document).on('selectedPivotsUpdated', updateSelectedPivots);
         });
     </script>
 </body>

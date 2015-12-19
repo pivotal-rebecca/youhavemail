@@ -1,10 +1,16 @@
 /*
-* What an adorable little server
+* Rebecca P @ Pivotal, Toronto
+* rputinski@pivotal.io
 */
 
-var envServices = JSON.parse(process.env.VCAP_SERVICES);
+var DEBUG = process.env.DEBUG === 'true';
+var envServices;
+var sendgrid;
+if (!DEBUG) {
+    envServices = JSON.parse(process.env.VCAP_SERVICES);
+    sendgrid = require('sendgrid')(envServices.sendgrid[0].credentials.username, envServices.sendgrid[0].credentials.password);
+}
 var express = require('express');
-var sendgrid = require('sendgrid')(envServices.sendgrid[0].credentials.username, envServices.sendgrid[0].credentials.password);
 var app = express();
 
 var bodyParser = require('body-parser');
@@ -22,16 +28,18 @@ var authMiddleware = function(req, res, next) {
         return unauthorized(res);
     }
 
-    if (user.name === 'jessee' && user.pass === 'bleepbloop') {
+    if (user.name === process.env.YHMUSER && user.pass === process.env.YHMPASS) {
         return next();
     }
     return unauthorized(res);
 }
-app.use(authMiddleware);
+if (!DEBUG) {
+    app.use(authMiddleware);
+}
 
 var mongoose = require('mongoose');
 
-if (process.env.DEBUG === 'true') {
+if (DEBUG) {
     mongoose.connect('mongodb://localhost/youhavemail');
 } else {
     var mongo = envServices.mongolab[0];
@@ -48,18 +56,31 @@ var Pivot = mongoose.model('Pivot', pivotSchema);
 var emailSchema = mongoose.Schema({
     subject: String,
     from: String,
-    message: String
+    message: String,
+    fromName: String
 });
 var EmailConfig = mongoose.model('EmailConfig', emailSchema);
-EmailConfig.findOneAndUpdate({},
-    {
-        subject: 'You have mail!',
-        from: 'jdeininger@pivotal.io',
-        message: 'You have mail in the mail area on the 11th floor.'
-    }, {upsert: true},
-    function(err, config) {
-        console.log("email config created");
+
+app.get('/emailConfig', function(req, res) {
+    EmailConfig.findOne().then(function(config) {
+        res.status(200).json(config).end();
+    })
+});
+
+app.post('/emailConfig', function(req, res) {
+    EmailConfig.findOneAndUpdate({}, {
+        from: req.body.from,
+        fromName: req.body.fromName,
+        message: req.body.message,
+        subject: req.body.subject
+    }, function(err, config) {
+        if (err) {
+            res.status(500).json({error: err}).end();
+        } else {
+            res.status(200).json(config).end();
+        }
     });
+});
 
 app.get('/pivots', function(req, res) {
     Pivot.find().then(function(docs) {
@@ -75,7 +96,8 @@ app.post('/send', function(req, res) {
           console.log("found email config" + emailConfig);
             var email = {
                 to: emails,
-                from: 'jdeininger@pivotal.io',
+                from: emailConfig.get('fromEmail'),
+                fromname: emailConfig.get('fromName'),
                 subject: emailConfig.get('subject'),
                 text: emailConfig.get('message')
             }

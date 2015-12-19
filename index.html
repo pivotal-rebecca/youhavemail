@@ -59,6 +59,10 @@
         button:active {
             background: #444;
         }
+        button[disabled] {
+            background: #999;
+            color: #444;
+        }
         .toggle-box {
             display: none;
             width: 50%;
@@ -129,7 +133,6 @@
         </ul>
 
         <p class='count'>Total pivots: </p>
-        <p class='selected-pivots'></p>
         <input type='text' class='filter' />
         <button class='send-message'>Send</button>
         <ul class='pivots'>
@@ -246,7 +249,14 @@
             }
 
             var updateSelectedPivots = function() {
-                $('.selected-pivots').html('Selected pivots: ' + $('.pivots li.selected').length);
+                var count = $('.pivots li.selected').length;
+                if (count === 0) {
+                    $('.send-message').attr('disabled', true);
+                    $('.send-message').html('Send');
+                } else {
+                    $('.send-message').removeAttr('disabled');
+                    $('.send-message').html('Send to ' + count + ' pivots');
+                }
             }
 
             $.get('/pivots', pivotsSuccess);

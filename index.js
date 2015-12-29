@@ -96,7 +96,7 @@ app.post('/send', function(req, res) {
           console.log("found email config" + emailConfig);
             var email = {
                 to: emails,
-                from: emailConfig.get('fromEmail'),
+                from: emailConfig.get('from'),
                 fromname: emailConfig.get('fromName'),
                 subject: emailConfig.get('subject'),
                 text: emailConfig.get('message')

@@ -97,6 +97,11 @@
             color: #444;
             font-size: 20px;
         }
+        .upload-pivots textarea {
+            font-family: 'Courier', sans-serif;
+            height:200px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -122,7 +127,9 @@
         </div>
 
         <div class='toggle-box upload-pivots'>
-
+            <p>Obtain the JSON from https://pivots.pivotallabs.com/api/users.json (after logging in with Okta). Save the json into a file called 'pivots.json' and paste the below in a terminal.</p>
+            <p>Enter the password provided at the prompt.</p>
+            <textarea>curl -X POST -H 'Content-Type: application/json' --user 'jessee' -p --data @pivots.json 'http://youhavemail.cfapps.io/addPivots?location=Toronto'</textarea>
         </div>
 
         <h1>You Have Mail!</h1>
@@ -230,12 +237,9 @@
                     contentType: 'application/json',
                     dataType: 'json',
                     success: function(result, stats, xhr) {
-                        $('.email-config').hide();
-                    },
-                    error: function(xhr, status, error) {
-
+                        $('.email-config').hide(100);
                     }
-                })
+                });
             }
 
             var toggleBox = function(boxClass) {
@@ -250,12 +254,13 @@
 
             var updateSelectedPivots = function() {
                 var count = $('.pivots li.selected').length;
+                var el = $('.send-message');
                 if (count === 0) {
-                    $('.send-message').attr('disabled', true);
-                    $('.send-message').html('Send');
+                    el.attr('disabled', true);
+                    el.html('Send');
                 } else {
-                    $('.send-message').removeAttr('disabled');
-                    $('.send-message').html('Send to ' + count + ' pivots');
+                    el.removeAttr('disabled');
+                    el.html('Send to ' + count + ' pivots');
                 }
             }
 
@@ -265,7 +270,6 @@
             $('.send-message').on('click', sendMessages);
             $('.filter').on('input', filterPivots);
             $('.filter').keypress(selectWithEnter);
-
 
             $('.email-config button.email-config-submit').on('click', saveEmailConfig);
 

@@ -113,30 +113,34 @@ app.post('/send', function(req, res) {
         })
 });
 
-// Paste the result of https://pivots.pivotallabs.com/api/users
+// Paste the result of https://pivots.pivotallabs.com/api/users.json
 // in the body of a POST to /addPivots?location=Toronto
 app.post('/addPivots', function(req, res) {
     var json = req.body;
-    json.forEach(function(pivot) {
-        if (pivot.location_name === req.query.location) {
-            Pivot.findOneAndUpdate(
-                {email: pivot.email},
-                {
-                    name: pivot.first_name+" "+pivot.last_name,
-                    email: pivot.email,
-                    photo: pivot.photo_url
-                },
-                {upsert: true}
-            ).then(function(err, doc) {
-                if (err) {
-                    console.log(err);
-                    res.status(500).json({error: 'Creating pivots'}).end();
-                } else {
-                    res.status(200).json({message: 'Created pivots'}).end();
-                }
-            });
-        }
-    });
+    if (req.query.location !== 'Toronto') {
+        res.status(400).json({error: 'Location not supported'}).end();
+    } else {
+        json.forEach(function(pivot) {
+            if (pivot.location_name === req.query.location) {
+                Pivot.findOneAndUpdate(
+                    {email: pivot.email},
+                    {
+                        name: pivot.first_name+" "+pivot.last_name,
+                        email: pivot.email,
+                        photo: pivot.photo_url
+                    },
+                    {upsert: true},
+                    function(err, doc) {
+                        if (err) {
+                            console.log(err);
+                            res.status(500).json({error: err}).end();
+                        } else {
+                            res.status(200).json({message: 'Created pivots'}).end();
+                        }
+                    });
+            }
+        });
+    }
 });
 
 app.get('/', function(req, res) {

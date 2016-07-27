@@ -42,7 +42,7 @@ var mongoose = require('mongoose');
 if (DEBUG) {
     mongoose.connect('mongodb://localhost/youhavemail');
 } else {
-    var mongo = envServices.mongolab[0];
+    var mongo = envServices.mlab[0];
     mongoose.connect(mongo.credentials.uri);
 }
 

@@ -130,13 +130,11 @@ app.post('/addPivots', function(req, res) {
                     function(err, doc) {
                         if (err) {
                             console.log(err);
-                            res.status(500).json({error: err}).end();
-                        } else {
-                            res.status(200).json({message: 'Created pivots'}).end();
                         }
                     });
             }
         });
+				res.status(200).json({message: "JSON accepted, updating pivots"}).end(); 
     }
 });
 

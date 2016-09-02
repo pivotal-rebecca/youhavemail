@@ -82,6 +82,25 @@ app.post('/emailConfig', function(req, res) {
     });
 });
 
+app.post('/addPerson', function(req, res) {
+    console.log(req.body);
+    Pivot.findOneAndUpdate({
+        email: req.body.email
+    }, 
+    {
+        name: req.body.name,
+        email: req.body.email
+    }, 
+    { upsert: true }, 
+    function(err, pivot) {
+        if (err) {
+            res.status(500).json({error: err}).end();
+        } else {
+            res.status(200).end();
+        }
+    });
+});
+
 app.get('/pivots', function(req, res) {
     Pivot.find().then(function(docs) {
         res.status(200).json(docs).end();

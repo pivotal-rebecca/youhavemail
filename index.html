@@ -132,14 +132,20 @@
             <textarea>curl -X POST -H 'Content-Type: application/json' --user <username> -p --data @pivots.json 'http://youhavemail.cfapps.io/addPivots?location=Toronto'</textarea>
         </div>
 
+        <div class='toggle-box add-person'>
+	        <p>Add someone manually! The email address will be available in the list.</p>
+            <p><input type='text' name='name' placeholder='Name'><br><input type='text' name='email' placeholder='Email address'><br><button>Add</button></p>
+	    </div>
+
         <h1>You Have Mail!</h1>
         <ul class='icons'>
             <li><span class='fa fa-cogs edit-config'></span></li>
             <li><span class='fa fa-upload'></span></li>
             <li><span class='fa fa-question-circle'></span></li>
+            <li><span class='fa fa-plus'></span></li>
         </ul>
 
-        <p class='count'>Total pivots: </p>
+        <p class='count'>Total pivots: <span></span></p>
         <input type='text' class='filter' />
         <button class='send-message'>Send</button>
         <ul class='pivots'>
@@ -150,8 +156,13 @@
             var allPivots;
             var pivotsToMessage = [];
 
+            var loadPivots = function() {
+                $.get('/pivots', pivotsSuccess);
+            }
+
             var populatePivots = function() {
                 var list = $('.pivots');
+                list.empty();
                 allPivots.forEach(function(pivot) {
                     list.append("<li data-email='"+pivot.email+"' data-name='"+pivot.name+"'>"+pivot.name+" ("+pivot.email+")</li>");
                 });
@@ -159,7 +170,7 @@
 
             var pivotsSuccess = function(pivots) {
                 allPivots = pivots;
-                $('.count').append(pivots.length);
+                $('.count span').empty().append(pivots.length);
                 populatePivots();
                 $('.pivots li').on('click', function() {
                     if ($(this).hasClass('selected')) {
@@ -242,6 +253,25 @@
                 });
             }
 
+            var addPerson = function() {
+                var name = $('.add-person input[name="name"]').val();
+                var email = $('.add-person input[name="email"]').val();
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/addPerson',
+                    data: JSON.stringify({
+                        name: name,
+                        email: email
+                    }),
+                    contentType: 'application/json',
+                    success: function(result, stats, xhr) {
+                        loadPivots();       
+                        $('.add-person').hide(100);
+                    }
+                });
+            };
+
             var toggleBox = function(boxClass) {
                 var open = $(boxClass).is(':visible');
                 $('.toggle-box').hide(50);
@@ -264,7 +294,7 @@
                 }
             }
 
-            $.get('/pivots', pivotsSuccess);
+            loadPivots();
             $.get('/emailConfig', loadEmailConfigSuccess);
 
             $('.send-message').on('click', sendMessages);
@@ -272,9 +302,13 @@
             $('.filter').keypress(selectWithEnter);
 
             $('.email-config button.email-config-submit').on('click', saveEmailConfig);
+            $('.add-person button').on('click', addPerson);
 
             $('.fa-upload').on('click', function() {
                 toggleBox('.upload-pivots');
+            });
+            $('.fa-plus').on('click', function() {
+                toggleBox('.add-person');
             });
             $('.fa-question-circle').on('click', function() {
                 toggleBox('.instructions');
